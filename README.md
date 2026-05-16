@@ -2,6 +2,8 @@
 
 Browser-first TypeScript SDK for the wagmi **data-collection REST APIs**. Wraps the ingest envelope, batches events in memory, auto-flushes on a timer / size threshold, and uses `navigator.sendBeacon` to ship the last batch as the page unloads.
 
+Types and request/response shapes are **generated from the server's OpenAPI spec** (`openapi.json` at the repo root) via [`openapi-typescript`](https://openapi-ts.dev/), and HTTP calls go through [`openapi-fetch`](https://openapi-ts.dev/openapi-fetch/) — so the entire surface is end-to-end typed against the server contract. Regenerate after a backend change with `pnpm gen:types:remote` (pulls from `http://localhost:3399/openapi.json`).
+
 ## Install
 
 ```bash
@@ -52,7 +54,7 @@ await dc.getSession('sess_001');
 await dc.getStudentSessions('stu_alice');
 await dc.getVideo('stu_alice', 'vid_42');
 await dc.getAttempt('att_1');
-await dc.getEvents({ studentId: 'stu_alice', from: '2026-05-01', limit: 100 });
+await dc.getEvents({ student_id: 'stu_alice', since: '2026-05-01T00:00:00Z', limit: 100 });
 
 const vouch = await dc.computeVouch({
     student_id: 'stu_alice',

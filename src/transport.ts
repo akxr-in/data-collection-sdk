@@ -1,58 +1,38 @@
+import createClient, { type Client } from 'openapi-fetch';
+import type { paths } from './generated/schema';
+
 export class TransportError extends Error {
     constructor(
         public status: number,
-        public body: string,
+        public body: unknown,
     ) {
-        super(`HTTP ${status}: ${body}`);
+        super(`HTTP ${status}: ${typeof body === 'string' ? body : JSON.stringify(body)}`);
         this.name = 'TransportError';
     }
 }
 
+/**
+ * Thin wrapper around `openapi-fetch` so callers get end-to-end typed access
+ * to every path/param/body/response, plus a `sendBeacon` escape hatch the
+ * generated client doesn't model (used during page unload).
+ */
 export class Transport {
+    readonly client: Client<paths>;
     private baseUrl: string;
-    private fetchImpl: typeof fetch;
 
     constructor(endpoint: string, fetchImpl?: typeof fetch) {
         this.baseUrl = endpoint.replace(/\/$/, '');
-        const resolved = fetchImpl ?? (typeof fetch !== 'undefined' ? fetch.bind(globalThis) : undefined);
-        if (!resolved) {
-            throw new Error('No fetch implementation available. Pass `fetch` in config.');
-        }
-        this.fetchImpl = resolved;
-    }
-
-    async post<T>(path: string, body: unknown): Promise<T> {
-        const res = await this.fetchImpl(`${this.baseUrl}${path}`, {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify(body),
+        this.client = createClient<paths>({
+            baseUrl: this.baseUrl,
+            ...(fetchImpl ? { fetch: fetchImpl } : {}),
         });
-        if (!res.ok) {
-            const text = await res.text().catch(() => '');
-            throw new TransportError(res.status, text);
-        }
-        return (await res.json()) as T;
-    }
-
-    async get<T>(path: string, params?: Record<string, string | number | undefined>): Promise<T> {
-        const url = new URL(`${this.baseUrl}${path}`);
-        if (params) {
-            for (const [k, v] of Object.entries(params)) {
-                if (v !== undefined && v !== null && v !== '') url.searchParams.set(k, String(v));
-            }
-        }
-        const res = await this.fetchImpl(url.toString());
-        if (!res.ok) {
-            const text = await res.text().catch(() => '');
-            throw new TransportError(res.status, text);
-        }
-        return (await res.json()) as T;
     }
 
     /**
-     * Fire-and-forget POST using `navigator.sendBeacon`. Used on `beforeunload`
-     * / `visibilitychange:hidden` to flush a final batch even as the page closes.
-     * Returns false if sendBeacon is unavailable or refuses the payload (e.g. too large).
+     * Fire-and-forget POST via `navigator.sendBeacon`. Used on
+     * `beforeunload` / `visibilitychange:hidden` to flush a final batch
+     * even as the page closes. Returns false if sendBeacon is unavailable
+     * or refuses the payload.
      */
     beacon(path: string, body: unknown): boolean {
         if (typeof navigator === 'undefined' || typeof navigator.sendBeacon !== 'function') {

@@ -1,11 +1,11 @@
-import type { QueuedEvent } from './types';
-import type { Transport } from './transport';
+import type { QueuedEvent, IngestEventsRequest } from './types';
+import { Transport, TransportError } from './transport';
 
 export interface EnvelopeContext {
     sessionId: string;
     batchId: string;
     studentId: string;
-    courseId: string;
+    courseId?: string;
     sdkVersion: string;
 }
 
@@ -15,6 +15,17 @@ export interface EventQueueOptions {
     flushIntervalMs: number;
     debug: boolean;
     onError?: (err: Error, events: QueuedEvent[]) => void;
+}
+
+function buildEnvelope(ctx: EnvelopeContext, events: QueuedEvent[]): IngestEventsRequest {
+    return {
+        sdk_version: ctx.sdkVersion,
+        session_id: ctx.sessionId,
+        student_id: ctx.studentId,
+        batch_id: ctx.batchId,
+        course_id: ctx.courseId ?? null,
+        events,
+    };
 }
 
 export class EventQueue {
@@ -58,18 +69,11 @@ export class EventQueue {
         this.flushing = true;
         const batch = this.events.splice(0, this.opts.maxBatchSize);
         try {
-            const ctx = this.getContext();
-            await this.transport.post('/v1/events', {
-                sdk_version: ctx.sdkVersion,
-                session_id: ctx.sessionId,
-                student_id: ctx.studentId,
-                batch_id: ctx.batchId,
-                course_id: ctx.courseId,
-                events: batch,
-            });
+            const body = buildEnvelope(this.getContext(), batch);
+            const { error, response } = await this.transport.client.POST('/v1/events', { body });
+            if (error) throw new TransportError(response.status, error);
             if (this.opts.debug) console.log(`[data-collection] flushed ${batch.length} events`);
         } catch (err) {
-            // Put the batch back at the front so order is preserved on retry
             this.events.unshift(...batch);
             if (this.opts.onError) this.opts.onError(err as Error, batch);
             else if (this.opts.debug) console.error('[data-collection] flush failed', err);
@@ -82,15 +86,7 @@ export class EventQueue {
     flushBeacon(): boolean {
         if (this.events.length === 0) return true;
         const batch = this.events.splice(0, this.opts.maxBatchSize);
-        const ctx = this.getContext();
-        const ok = this.transport.beacon('/v1/events', {
-            sdk_version: ctx.sdkVersion,
-            session_id: ctx.sessionId,
-            student_id: ctx.studentId,
-            batch_id: ctx.batchId,
-            course_id: ctx.courseId,
-            events: batch,
-        });
+        const ok = this.transport.beacon('/v1/events', buildEnvelope(this.getContext(), batch));
         if (!ok) this.events.unshift(...batch);
         return ok;
     }

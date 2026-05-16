@@ -4,9 +4,21 @@ import { Transport } from '../transport';
 
 function makeTransport(handler: (path: string, body: unknown) => Response | Promise<Response>) {
     const fetchImpl = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-        const url = typeof input === 'string' ? input : input.toString();
+        const url =
+            input instanceof Request
+                ? input.url
+                : typeof input === 'string'
+                  ? input
+                  : (input as URL).toString();
         const path = new URL(url).pathname;
-        return handler(path, init?.body ? JSON.parse(init.body as string) : undefined);
+        let body: unknown;
+        if (input instanceof Request) {
+            const text = await input.clone().text();
+            body = text ? JSON.parse(text) : undefined;
+        } else if (init?.body) {
+            body = JSON.parse(init.body as string);
+        }
+        return handler(path, body);
     }) as unknown as typeof fetch;
     return { transport: new Transport('http://x', fetchImpl), fetchImpl };
 }
@@ -26,7 +38,11 @@ describe('EventQueue', () => {
 
     it('flushes when batch size is reached', async () => {
         const { transport, fetchImpl } = makeTransport(
-            () => new Response(JSON.stringify({ data: { accepted: 2 }, message: 'ok' }), { status: 202 }),
+            () =>
+                new Response(JSON.stringify({ data: { accepted: 2 }, message: 'ok' }), {
+                    status: 202,
+                    headers: { 'content-type': 'application/json' },
+                }),
         );
         const q = new EventQueue(transport, ctx, {
             maxBatchSize: 2,
@@ -36,13 +52,19 @@ describe('EventQueue', () => {
         });
         q.enqueue({ event_type: 'a', ts_client: 't', payload: {} });
         q.enqueue({ event_type: 'b', ts_client: 't', payload: {} });
-        await new Promise((r) => setTimeout(r, 0));
+        await new Promise((r) => setTimeout(r, 10));
         expect(fetchImpl).toHaveBeenCalledTimes(1);
         expect(q.size()).toBe(0);
     });
 
     it('re-queues batch on failure', async () => {
-        const { transport } = makeTransport(() => new Response('err', { status: 500 }));
+        const { transport } = makeTransport(
+            () =>
+                new Response(JSON.stringify({ message: 'boom' }), {
+                    status: 500,
+                    headers: { 'content-type': 'application/json' },
+                }),
+        );
         const onError = vi.fn();
         const q = new EventQueue(transport, ctx, {
             maxBatchSize: 1,
@@ -52,7 +74,7 @@ describe('EventQueue', () => {
             onError,
         });
         q.enqueue({ event_type: 'a', ts_client: 't', payload: {} });
-        await new Promise((r) => setTimeout(r, 0));
+        await new Promise((r) => setTimeout(r, 10));
         expect(q.size()).toBe(1);
         expect(onError).toHaveBeenCalled();
     });

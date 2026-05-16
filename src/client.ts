@@ -1,4 +1,4 @@
-import { Transport } from './transport';
+import { Transport, TransportError } from './transport';
 import { EventQueue } from './queue';
 import { uuid } from './uuid';
 import { VideoTracker } from './trackers/video';
@@ -7,7 +7,13 @@ import type {
     DataCollectionConfig,
     TrackOptions,
     EventQuery,
-    IngestResponse,
+    AkxrEvent,
+    SessionSummary,
+    VideoSummary,
+    QuizAttemptSummary,
+    VouchRequest,
+    VouchResult,
+    HealthResponse,
 } from './types';
 
 export class DataCollection {
@@ -17,7 +23,7 @@ export class DataCollection {
     private batchId: string = uuid();
     private sdkVersion: string;
     private studentId: string;
-    private courseId: string;
+    private courseId?: string;
     private unloadHandler?: () => void;
     private visibilityHandler?: () => void;
 
@@ -55,6 +61,11 @@ export class DataCollection {
         this.attachBrowserHandlers();
     }
 
+    /** Direct access to the underlying openapi-fetch typed client (escape hatch). */
+    get raw() {
+        return this.transport.client;
+    }
+
     private ensureSession(): string {
         if (!this.sessionId) this.sessionId = uuid();
         return this.sessionId;
@@ -78,7 +89,7 @@ export class DataCollection {
     /** Update the active learner/course (e.g. after sign-in). */
     identify(studentId: string, courseId?: string): void {
         this.studentId = studentId;
-        if (courseId) this.courseId = courseId;
+        if (courseId !== undefined) this.courseId = courseId;
     }
 
     /** Enqueue a custom event. Most callers should use `video.*` / `quiz.*` helpers. */
@@ -91,65 +102,90 @@ export class DataCollection {
         this.queue.enqueue({
             event_type: eventType,
             ts_client: opts.tsClient ?? new Date().toISOString(),
-            module_id: opts.moduleId,
-            attempt_id: opts.attemptId,
+            module_id: opts.moduleId ?? null,
+            attempt_id: opts.attemptId ?? null,
             payload,
         });
     }
 
-    /** Force-send any queued events. */
     flush(): Promise<void> {
         return this.queue.flush();
     }
 
-    /** Current session_id, or null if no session has started yet. */
     get currentSessionId(): string | null {
         return this.sessionId;
     }
-
-    /** Number of events waiting to be flushed. */
     get queueSize(): number {
         return this.queue.size();
     }
 
-    // ---------- read-side wrappers ----------
+    // ---------- typed read-side wrappers ----------
 
-    getEvents(q: EventQuery = {}): Promise<unknown> {
-        return this.transport.get('/v1/events', {
-            studentId: q.studentId,
-            sessionId: q.sessionId,
-            attemptId: q.attemptId,
-            eventType: q.eventType,
-            moduleId: q.moduleId,
-            from: q.from,
-            to: q.to,
-            limit: q.limit,
+    async healthz(): Promise<HealthResponse> {
+        const { data, response } = await this.transport.client.GET('/healthz');
+        if (!data) throw new TransportError(response.status, await response.text());
+        return data;
+    }
+
+    async getEvents(q: EventQuery = {}): Promise<{ data: AkxrEvent[]; message: string }> {
+        const { data, error, response } = await this.transport.client.GET('/v1/events', {
+            params: { query: q },
         });
+        if (error || !data) throw new TransportError(response.status, error);
+        return data;
     }
 
-    getSession(sessionId: string): Promise<unknown> {
-        return this.transport.get(`/v1/sessions/${encodeURIComponent(sessionId)}`);
-    }
-
-    getStudentSessions(studentId: string): Promise<unknown> {
-        return this.transport.get(`/v1/students/${encodeURIComponent(studentId)}/sessions`);
-    }
-
-    getVideo(studentId: string, videoId: string): Promise<unknown> {
-        return this.transport.get(
-            `/v1/students/${encodeURIComponent(studentId)}/videos/${encodeURIComponent(videoId)}`,
+    async getSession(sessionId: string): Promise<{ data: SessionSummary; message: string }> {
+        const { data, error, response } = await this.transport.client.GET(
+            '/v1/sessions/{sessionId}',
+            { params: { path: { sessionId } } },
         );
+        if (error || !data) throw new TransportError(response.status, error);
+        return data;
     }
 
-    getAttempt(attemptId: string): Promise<unknown> {
-        return this.transport.get(`/v1/attempts/${encodeURIComponent(attemptId)}`);
+    async getStudentSessions(
+        studentId: string,
+    ): Promise<{ data: SessionSummary[]; message: string }> {
+        const { data, error, response } = await this.transport.client.GET(
+            '/v1/students/{studentId}/sessions',
+            { params: { path: { studentId } } },
+        );
+        if (error || !data) throw new TransportError(response.status, error);
+        return data;
     }
 
-    computeVouch<T = unknown>(input: Record<string, unknown>): Promise<T> {
-        return this.transport.post<T>('/v1/score/vouch', input);
+    async getVideo(
+        studentId: string,
+        videoId: string,
+    ): Promise<{ data: VideoSummary; message: string }> {
+        const { data, error, response } = await this.transport.client.GET(
+            '/v1/students/{studentId}/videos/{videoId}',
+            { params: { path: { studentId, videoId } } },
+        );
+        if (error || !data) throw new TransportError(response.status, error);
+        return data;
     }
 
-    /** Stop timers and detach browser listeners. Does not flush. */
+    async getAttempt(
+        attemptId: string,
+    ): Promise<{ data: QuizAttemptSummary; message: string }> {
+        const { data, error, response } = await this.transport.client.GET(
+            '/v1/attempts/{attemptId}',
+            { params: { path: { attemptId } } },
+        );
+        if (error || !data) throw new TransportError(response.status, error);
+        return data;
+    }
+
+    async computeVouch(input: VouchRequest): Promise<{ data: VouchResult; message: string }> {
+        const { data, error, response } = await this.transport.client.POST('/v1/score/vouch', {
+            body: input,
+        });
+        if (error || !data) throw new TransportError(response.status, error);
+        return data;
+    }
+
     destroy(): void {
         this.queue.stop();
         if (typeof window !== 'undefined') {
@@ -171,5 +207,3 @@ export class DataCollection {
         document.addEventListener('visibilitychange', this.visibilityHandler);
     }
 }
-
-export type { IngestResponse };
