@@ -1,37 +1,40 @@
 import type { DataCollection } from '../client';
+import type { TrackOptions } from '../types';
 
+/** Helpers for video events (`video_play` / `video_pause` / `video_seek` / `video_complete` / `playback_rate_change`). */
 export class VideoTracker {
     constructor(private dc: DataCollection) {}
 
-    play(videoId: string, payload: Record<string, unknown> = {}, moduleId?: string): void {
-        this.dc.track('video_play', { video_id: videoId, ...payload }, { moduleId });
+    play(videoId: string, positionSecAfter: number, opts: TrackOptions = {}): void {
+        this.dc.track('video_play', { video_id: videoId, position_sec_after: positionSecAfter }, opts);
     }
 
-    pause(videoId: string, payload: Record<string, unknown> = {}, moduleId?: string): void {
-        this.dc.track('video_pause', { video_id: videoId, ...payload }, { moduleId });
+    pause(videoId: string, positionSecAfter: number, opts: TrackOptions = {}): void {
+        this.dc.track('video_pause', { video_id: videoId, position_sec_after: positionSecAfter }, opts);
     }
 
-    seek(videoId: string, fromSec: number, toSec: number, moduleId?: string): void {
+    seek(
+        videoId: string,
+        positionSecBefore: number,
+        positionSecAfter: number,
+        opts: TrackOptions = {},
+    ): void {
         this.dc.track(
             'video_seek',
-            { video_id: videoId, from_sec: fromSec, to_sec: toSec },
-            { moduleId },
+            {
+                video_id: videoId,
+                position_sec_before: positionSecBefore,
+                position_sec_after: positionSecAfter,
+            },
+            opts,
         );
     }
 
-    progress(videoId: string, positionSec: number, durationSec: number, moduleId?: string): void {
-        this.dc.track(
-            'video_progress',
-            { video_id: videoId, position_sec: positionSec, duration_sec: durationSec },
-            { moduleId },
-        );
+    complete(videoId: string, opts: TrackOptions = {}): void {
+        this.dc.track('video_complete', { video_id: videoId }, opts);
     }
 
-    complete(videoId: string, payload: Record<string, unknown> = {}, moduleId?: string): void {
-        this.dc.track('video_complete', { video_id: videoId, ...payload }, { moduleId });
-    }
-
-    replay(videoId: string, payload: Record<string, unknown> = {}, moduleId?: string): void {
-        this.dc.track('video_replay', { video_id: videoId, ...payload }, { moduleId });
+    playbackRateChange(videoId: string, playbackRate: number, opts: TrackOptions = {}): void {
+        this.dc.track('playback_rate_change', { video_id: videoId, playback_rate: playbackRate }, opts);
     }
 }

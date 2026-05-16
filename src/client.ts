@@ -3,10 +3,15 @@ import { EventQueue } from './queue';
 import { uuid } from './uuid';
 import { VideoTracker } from './trackers/video';
 import { QuizTracker } from './trackers/quiz';
+import { TextTracker } from './trackers/text';
+import { FocusTracker } from './trackers/focus';
 import type {
     DataCollectionConfig,
     TrackOptions,
     EventQuery,
+    EventType,
+    PayloadFor,
+    QueuedEvent,
     AkxrEvent,
     SessionSummary,
     VideoSummary,
@@ -29,6 +34,8 @@ export class DataCollection {
 
     readonly video: VideoTracker;
     readonly quiz: QuizTracker;
+    readonly text: TextTracker;
+    readonly focus: FocusTracker;
 
     constructor(cfg: DataCollectionConfig) {
         this.sdkVersion = cfg.sdkVersion ?? '1.0.0';
@@ -56,6 +63,8 @@ export class DataCollection {
 
         this.video = new VideoTracker(this);
         this.quiz = new QuizTracker(this);
+        this.text = new TextTracker(this);
+        this.focus = new FocusTracker(this);
 
         this.queue.start();
         this.attachBrowserHandlers();
@@ -72,17 +81,17 @@ export class DataCollection {
     }
 
     /** Begin a new learner session. Generates fresh session_id + batch_id and emits `session_start`. */
-    startSession(meta: Record<string, unknown> = {}): string {
+    startSession(): string {
         this.sessionId = uuid();
         this.batchId = uuid();
         this.queue.start();
-        this.track('session_start', meta);
+        this.track('session_start', {});
         return this.sessionId;
     }
 
     /** Emit `session_end` and flush pending events. */
-    async endSession(meta: Record<string, unknown> = {}): Promise<void> {
-        this.track('session_end', meta);
+    async endSession(): Promise<void> {
+        this.track('session_end', {});
         await this.flush();
     }
 
@@ -92,20 +101,22 @@ export class DataCollection {
         if (courseId !== undefined) this.courseId = courseId;
     }
 
-    /** Enqueue a custom event. Most callers should use `video.*` / `quiz.*` helpers. */
-    track(
-        eventType: string,
-        payload: Record<string, unknown> = {},
-        opts: TrackOptions = {},
-    ): void {
+    /**
+     * Enqueue a typed event. `payload` is type-checked against the schema for the
+     * given `eventType` (discriminated union from the OpenAPI spec).
+     * Most callers should use the `video.*` / `quiz.*` / `text.*` / `focus.*` helpers.
+     */
+    track<T extends EventType>(eventType: T, payload: PayloadFor<T>, opts: TrackOptions = {}): void {
         this.ensureSession();
+        // Cast: TS can't narrow the union after we re-pack the fields, but the
+        // payload was just type-checked above against PayloadFor<T>.
         this.queue.enqueue({
             event_type: eventType,
             ts_client: opts.tsClient ?? new Date().toISOString(),
             module_id: opts.moduleId ?? null,
             attempt_id: opts.attemptId ?? null,
             payload,
-        });
+        } as QueuedEvent);
     }
 
     flush(): Promise<void> {

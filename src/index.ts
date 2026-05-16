@@ -15,5 +15,6 @@ export type {
     VouchRequest,
     VouchResult,
     HealthResponse,
+    EventType,
 } from './types';
 export type { paths, components, operations } from './generated/schema';

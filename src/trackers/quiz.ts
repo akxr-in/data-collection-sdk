@@ -1,22 +1,43 @@
 import type { DataCollection } from '../client';
+import type { TrackOptions, PayloadFor } from '../types';
 
+/** Helpers for quiz / question events. */
 export class QuizTracker {
     constructor(private dc: DataCollection) {}
 
-    start(attemptId: string, payload: Record<string, unknown> = {}, moduleId?: string): void {
-        this.dc.track('quiz_start', payload, { attemptId, moduleId });
+    start(attemptId: string, quizId: string, opts: Omit<TrackOptions, 'attemptId'> = {}): void {
+        this.dc.track('quiz_start', { quiz_id: quizId }, { ...opts, attemptId });
     }
 
-    answer(attemptId: string, payload: Record<string, unknown>, moduleId?: string): void {
-        this.dc.track('quiz_answer', payload, { attemptId, moduleId });
+    submit(
+        attemptId: string,
+        result: PayloadFor<'quiz_submit'> = {},
+        opts: Omit<TrackOptions, 'attemptId'> = {},
+    ): void {
+        this.dc.track('quiz_submit', result, { ...opts, attemptId });
     }
 
-    /** Use on `document.visibilitychange` / `blur` to capture potential cheating signals. */
-    tabSwitch(attemptId: string, moduleId?: string): void {
-        this.dc.track('quiz_tab_switch', { at: new Date().toISOString() }, { attemptId, moduleId });
+    autosave(
+        attemptId: string,
+        payload: PayloadFor<'quiz_autosave'>,
+        opts: Omit<TrackOptions, 'attemptId'> = {},
+    ): void {
+        this.dc.track('quiz_autosave', payload, { ...opts, attemptId });
     }
 
-    submit(attemptId: string, payload: Record<string, unknown> = {}, moduleId?: string): void {
-        this.dc.track('quiz_submit', payload, { attemptId, moduleId });
+    questionFocus(
+        attemptId: string,
+        questionId: string,
+        opts: Omit<TrackOptions, 'attemptId'> = {},
+    ): void {
+        this.dc.track('question_focus', { question_id: questionId }, { ...opts, attemptId });
+    }
+
+    answerChange(
+        attemptId: string,
+        questionId: string,
+        opts: Omit<TrackOptions, 'attemptId'> = {},
+    ): void {
+        this.dc.track('question_answer_change', { question_id: questionId }, { ...opts, attemptId });
     }
 }

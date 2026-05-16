@@ -24,11 +24,14 @@
         "typecheck": "tsc --noEmit",
         "test": "vitest run",
         "gen:types": "openapi-typescript openapi.json -o src/generated/schema.ts",
-        "gen:types:remote": "openapi-typescript http://localhost:3399/openapi.json -o src/generated/schema.ts"
+        "gen:types:remote": "openapi-typescript http://localhost:3399/openapi.json -o src/generated/schema.ts",
+        "demo": "tsx demo/run.ts"
     },
     "devDependencies": {
+        "@types/node": "^25.8.0",
         "openapi-typescript": "^7.13.0",
         "tsup": "^8.0.0",
+        "tsx": "^4.22.0",
         "typescript": "^5.4.0",
         "vitest": "^1.6.0"
     },

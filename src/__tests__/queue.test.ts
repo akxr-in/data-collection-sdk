@@ -50,8 +50,8 @@ describe('EventQueue', () => {
             flushIntervalMs: 0,
             debug: false,
         });
-        q.enqueue({ event_type: 'a', ts_client: 't', payload: {} });
-        q.enqueue({ event_type: 'b', ts_client: 't', payload: {} });
+        q.enqueue({ event_type: 'session_start', ts_client: 't', payload: {} });
+        q.enqueue({ event_type: 'session_end', ts_client: 't', payload: {} });
         await new Promise((r) => setTimeout(r, 10));
         expect(fetchImpl).toHaveBeenCalledTimes(1);
         expect(q.size()).toBe(0);
@@ -73,7 +73,7 @@ describe('EventQueue', () => {
             debug: false,
             onError,
         });
-        q.enqueue({ event_type: 'a', ts_client: 't', payload: {} });
+        q.enqueue({ event_type: 'session_start', ts_client: 't', payload: {} });
         await new Promise((r) => setTimeout(r, 10));
         expect(q.size()).toBe(1);
         expect(onError).toHaveBeenCalled();
@@ -87,9 +87,9 @@ describe('EventQueue', () => {
             flushIntervalMs: 0,
             debug: false,
         });
-        q.enqueue({ event_type: 'a', ts_client: 't', payload: {} });
-        q.enqueue({ event_type: 'b', ts_client: 't', payload: {} });
-        q.enqueue({ event_type: 'c', ts_client: 't', payload: {} });
+        q.enqueue({ event_type: 'session_start', ts_client: 't', payload: {} });
+        q.enqueue({ event_type: 'session_end', ts_client: 't', payload: {} });
+        q.enqueue({ event_type: 'focus_gain', ts_client: 't', payload: {} });
         expect(q.size()).toBe(2);
     });
 });

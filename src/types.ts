@@ -11,9 +11,13 @@ export type QuizAttemptSummary = Schemas['QuizAttemptSummary'];
 export type VouchRequest = Schemas['VouchRequest'];
 export type VouchResult = Schemas['VouchResult'];
 export type HealthResponse = Schemas['HealthResponse'];
+export type EventType = Schemas['EventType'];
 
-/** A single queued event prior to being wrapped in an envelope. */
+/** A single queued event prior to being wrapped in an envelope (discriminated by `event_type`). */
 export type QueuedEvent = IngestEventsRequest['events'][number];
+
+/** Payload shape required for a given `event_type`. */
+export type PayloadFor<T extends EventType> = Extract<QueuedEvent, { event_type: T }>['payload'];
 
 /** Query parameters accepted by `GET /v1/events` (snake_case matches server). */
 export type EventQuery = NonNullable<paths['/v1/events']['get']['parameters']['query']>;

@@ -90,7 +90,7 @@ export interface paths {
                     student_id?: string;
                     session_id?: string;
                     attempt_id?: string;
-                    event_type?: string;
+                    event_type?: components["schemas"]["EventType"];
                     module_id?: string;
                     since?: string;
                     until?: string;
@@ -136,22 +136,7 @@ export interface paths {
             };
             requestBody?: {
                 content: {
-                    "application/json": {
-                        sdk_version: string;
-                        session_id: string;
-                        student_id: string;
-                        batch_id: string;
-                        course_id?: string | null;
-                        events: {
-                            event_type: string;
-                            ts_client: string;
-                            module_id?: string | null;
-                            attempt_id?: string | null;
-                            payload?: {
-                                [key: string]: unknown;
-                            };
-                        }[];
-                    };
+                    "application/json": components["schemas"]["BatchEnvelope"];
                 };
             };
             responses: {
@@ -501,21 +486,290 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        EmptyPayload: Record<string, never>;
+        SessionStartEvent: {
+            ts_client: string;
+            module_id?: string | null;
+            attempt_id?: string | null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            event_type: "session_start";
+            payload?: components["schemas"]["EmptyPayload"];
+        };
+        SessionEndEvent: {
+            ts_client: string;
+            module_id?: string | null;
+            attempt_id?: string | null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            event_type: "session_end";
+            payload?: components["schemas"]["EmptyPayload"];
+        };
+        FocusGainEvent: {
+            ts_client: string;
+            module_id?: string | null;
+            attempt_id?: string | null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            event_type: "focus_gain";
+            payload?: components["schemas"]["EmptyPayload"];
+        };
+        FocusLossEvent: {
+            ts_client: string;
+            module_id?: string | null;
+            attempt_id?: string | null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            event_type: "focus_loss";
+            payload?: components["schemas"]["EmptyPayload"];
+        };
+        VideoPlayPayload: {
+            video_id: string;
+            position_sec_after: number;
+        };
+        VideoPlayEvent: {
+            ts_client: string;
+            module_id?: string | null;
+            attempt_id?: string | null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            event_type: "video_play";
+            payload: components["schemas"]["VideoPlayPayload"];
+        };
+        VideoPausePayload: {
+            video_id: string;
+            position_sec_after: number;
+        };
+        VideoPauseEvent: {
+            ts_client: string;
+            module_id?: string | null;
+            attempt_id?: string | null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            event_type: "video_pause";
+            payload: components["schemas"]["VideoPausePayload"];
+        };
+        VideoSeekPayload: {
+            video_id: string;
+            position_sec_before: number;
+            position_sec_after: number;
+        };
+        VideoSeekEvent: {
+            ts_client: string;
+            module_id?: string | null;
+            attempt_id?: string | null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            event_type: "video_seek";
+            payload: components["schemas"]["VideoSeekPayload"];
+        };
+        VideoCompletePayload: {
+            video_id: string;
+        };
+        VideoCompleteEvent: {
+            ts_client: string;
+            module_id?: string | null;
+            attempt_id?: string | null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            event_type: "video_complete";
+            payload: components["schemas"]["VideoCompletePayload"];
+        };
+        PlaybackRateChangePayload: {
+            video_id: string;
+            playback_rate: number;
+        };
+        PlaybackRateChangeEvent: {
+            ts_client: string;
+            module_id?: string | null;
+            attempt_id?: string | null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            event_type: "playback_rate_change";
+            payload: components["schemas"]["PlaybackRateChangePayload"];
+        };
+        TextOpenPayload: {
+            text_id: string;
+        };
+        TextOpenEvent: {
+            ts_client: string;
+            module_id?: string | null;
+            attempt_id?: string | null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            event_type: "text_open";
+            payload: components["schemas"]["TextOpenPayload"];
+        };
+        TextScrollPayload: {
+            text_id: string;
+            scroll_pct: number;
+            visible_range?: {
+                start: number;
+                end: number;
+            };
+        };
+        TextScrollEvent: {
+            ts_client: string;
+            module_id?: string | null;
+            attempt_id?: string | null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            event_type: "text_scroll";
+            payload: components["schemas"]["TextScrollPayload"];
+        };
+        TextClosePayload: {
+            text_id: string;
+            time_open_sec: number;
+        };
+        TextCloseEvent: {
+            ts_client: string;
+            module_id?: string | null;
+            attempt_id?: string | null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            event_type: "text_close";
+            payload: components["schemas"]["TextClosePayload"];
+        };
+        HighlightAddPayload: {
+            text_id: string;
+            range: {
+                start: number;
+                end: number;
+            };
+            text: string;
+        };
+        HighlightAddEvent: {
+            ts_client: string;
+            module_id?: string | null;
+            attempt_id?: string | null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            event_type: "highlight_add";
+            payload: components["schemas"]["HighlightAddPayload"];
+        };
+        NoteAddPayload: {
+            text_id: string;
+            note_id: string;
+        };
+        NoteAddEvent: {
+            ts_client: string;
+            module_id?: string | null;
+            attempt_id?: string | null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            event_type: "note_add";
+            payload: components["schemas"]["NoteAddPayload"];
+        };
+        QuizStartPayload: {
+            quiz_id: string;
+        };
+        QuizStartEvent: {
+            ts_client: string;
+            module_id?: string | null;
+            attempt_id?: string | null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            event_type: "quiz_start";
+            payload: components["schemas"]["QuizStartPayload"];
+        };
+        QuizSubmitPayload: {
+            score_raw?: number | null;
+            score_pct?: number | null;
+        };
+        QuizSubmitEvent: {
+            ts_client: string;
+            module_id?: string | null;
+            attempt_id?: string | null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            event_type: "quiz_submit";
+            payload: components["schemas"]["QuizSubmitPayload"];
+        };
+        QuizAutosavePayload: {
+            question_id?: string;
+            answers_snapshot?: {
+                [key: string]: unknown;
+            };
+        };
+        QuizAutosaveEvent: {
+            ts_client: string;
+            module_id?: string | null;
+            attempt_id?: string | null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            event_type: "quiz_autosave";
+            payload?: components["schemas"]["QuizAutosavePayload"];
+        };
+        QuestionFocusPayload: {
+            question_id: string;
+        };
+        QuestionFocusEvent: {
+            ts_client: string;
+            module_id?: string | null;
+            attempt_id?: string | null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            event_type: "question_focus";
+            payload: components["schemas"]["QuestionFocusPayload"];
+        };
+        QuestionAnswerChangePayload: {
+            question_id: string;
+        };
+        QuestionAnswerChangeEvent: {
+            ts_client: string;
+            module_id?: string | null;
+            attempt_id?: string | null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            event_type: "question_answer_change";
+            payload: components["schemas"]["QuestionAnswerChangePayload"];
+        };
+        EventEnvelope: components["schemas"]["SessionStartEvent"] | components["schemas"]["SessionEndEvent"] | components["schemas"]["FocusGainEvent"] | components["schemas"]["FocusLossEvent"] | components["schemas"]["VideoPlayEvent"] | components["schemas"]["VideoPauseEvent"] | components["schemas"]["VideoSeekEvent"] | components["schemas"]["VideoCompleteEvent"] | components["schemas"]["PlaybackRateChangeEvent"] | components["schemas"]["TextOpenEvent"] | components["schemas"]["TextScrollEvent"] | components["schemas"]["TextCloseEvent"] | components["schemas"]["HighlightAddEvent"] | components["schemas"]["NoteAddEvent"] | components["schemas"]["QuizStartEvent"] | components["schemas"]["QuizSubmitEvent"] | components["schemas"]["QuizAutosaveEvent"] | components["schemas"]["QuestionFocusEvent"] | components["schemas"]["QuestionAnswerChangeEvent"];
         IngestEventsRequest: {
             sdk_version: string;
             session_id: string;
             student_id: string;
             batch_id: string;
             course_id?: string | null;
-            events: {
-                event_type: string;
-                ts_client: string;
-                module_id?: string | null;
-                attempt_id?: string | null;
-                payload?: {
-                    [key: string]: unknown;
-                };
-            }[];
+            events: components["schemas"]["EventEnvelope"][];
         };
         VouchRequest: {
             gate: {
@@ -560,12 +814,14 @@ export interface components {
                 mentor_professionalism_rating_avg: number | null;
             };
         };
+        /** @enum {string} */
+        EventType: "session_start" | "session_end" | "focus_gain" | "focus_loss" | "video_play" | "video_pause" | "video_seek" | "video_complete" | "playback_rate_change" | "text_open" | "text_scroll" | "text_close" | "highlight_add" | "note_add" | "quiz_start" | "quiz_submit" | "quiz_autosave" | "question_focus" | "question_answer_change";
         MessageErrorResponse: {
             message: string;
         };
         AkxrEvent: {
             event_id: string;
-            event_type: string;
+            event_type: components["schemas"]["EventType"];
             ts_server: string;
             ts_client: string;
             sdk_version: string;
@@ -641,6 +897,14 @@ export interface components {
             status: string;
             timestamp: string;
             message: string;
+        };
+        BatchEnvelope: {
+            sdk_version: string;
+            session_id: string;
+            student_id: string;
+            batch_id: string;
+            course_id?: string | null;
+            events: components["schemas"]["EventEnvelope"][];
         };
     };
     responses: never;
