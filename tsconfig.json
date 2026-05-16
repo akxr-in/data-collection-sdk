@@ -9,6 +9,7 @@
         "esModuleInterop": true,
         "skipLibCheck": true,
         "declaration": true,
+        "rootDir": "./src",
         "outDir": "dist",
         "resolveJsonModule": true
     },
