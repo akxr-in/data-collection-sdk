@@ -4,3 +4,6 @@ dist
 *.log
 coverage
 demo
+.env
+.env.local
+.env.*.local
