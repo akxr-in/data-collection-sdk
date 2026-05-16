@@ -1,7 +1,19 @@
 {
-    "name": "@wagmi/data-collection-sdk",
+    "name": "@akxr-in/data-collection-sdk",
     "version": "0.1.0",
-    "description": "TypeScript SDK for the wagmi data-collection REST APIs",
+    "description": "TypeScript SDK for the akxr data-collection REST APIs",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/akxr-in/data-collection-sdk.git"
+    },
+    "homepage": "https://github.com/akxr-in/data-collection-sdk#readme",
+    "bugs": {
+        "url": "https://github.com/akxr-in/data-collection-sdk/issues"
+    },
+    "publishConfig": {
+        "registry": "https://npm.pkg.github.com",
+        "access": "restricted"
+    },
     "type": "module",
     "main": "./dist/index.cjs",
     "module": "./dist/index.js",
