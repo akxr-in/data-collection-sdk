@@ -1,0 +1,73 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { EventQueue } from '../queue';
+import { Transport } from '../transport';
+
+function makeTransport(handler: (path: string, body: unknown) => Response | Promise<Response>) {
+    const fetchImpl = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = typeof input === 'string' ? input : input.toString();
+        const path = new URL(url).pathname;
+        return handler(path, init?.body ? JSON.parse(init.body as string) : undefined);
+    }) as unknown as typeof fetch;
+    return { transport: new Transport('http://x', fetchImpl), fetchImpl };
+}
+
+const ctx = () => ({
+    sessionId: 's1',
+    batchId: 'b1',
+    studentId: 'stu',
+    courseId: 'c',
+    sdkVersion: '1.0.0',
+});
+
+describe('EventQueue', () => {
+    beforeEach(() => {
+        vi.useRealTimers();
+    });
+
+    it('flushes when batch size is reached', async () => {
+        const { transport, fetchImpl } = makeTransport(
+            () => new Response(JSON.stringify({ data: { accepted: 2 }, message: 'ok' }), { status: 202 }),
+        );
+        const q = new EventQueue(transport, ctx, {
+            maxBatchSize: 2,
+            maxQueueSize: 10,
+            flushIntervalMs: 0,
+            debug: false,
+        });
+        q.enqueue({ event_type: 'a', ts_client: 't', payload: {} });
+        q.enqueue({ event_type: 'b', ts_client: 't', payload: {} });
+        await new Promise((r) => setTimeout(r, 0));
+        expect(fetchImpl).toHaveBeenCalledTimes(1);
+        expect(q.size()).toBe(0);
+    });
+
+    it('re-queues batch on failure', async () => {
+        const { transport } = makeTransport(() => new Response('err', { status: 500 }));
+        const onError = vi.fn();
+        const q = new EventQueue(transport, ctx, {
+            maxBatchSize: 1,
+            maxQueueSize: 10,
+            flushIntervalMs: 0,
+            debug: false,
+            onError,
+        });
+        q.enqueue({ event_type: 'a', ts_client: 't', payload: {} });
+        await new Promise((r) => setTimeout(r, 0));
+        expect(q.size()).toBe(1);
+        expect(onError).toHaveBeenCalled();
+    });
+
+    it('drops oldest when queue is full', () => {
+        const { transport } = makeTransport(() => new Response('ok', { status: 202 }));
+        const q = new EventQueue(transport, ctx, {
+            maxBatchSize: 100,
+            maxQueueSize: 2,
+            flushIntervalMs: 0,
+            debug: false,
+        });
+        q.enqueue({ event_type: 'a', ts_client: 't', payload: {} });
+        q.enqueue({ event_type: 'b', ts_client: 't', payload: {} });
+        q.enqueue({ event_type: 'c', ts_client: 't', payload: {} });
+        expect(q.size()).toBe(2);
+    });
+});
