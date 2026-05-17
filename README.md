@@ -26,7 +26,7 @@ This SDK is published to the **GitHub Packages** registry under the `@akxr-in` s
    //npm.pkg.github.com/:_authToken=ghp_xxxxxxxxxxxx
    ```
 
-   In CI, `actions/setup-node` with `registry-url: https://npm.pkg.github.com` injects the token automatically from `${{ secrets.SDK_GITHUB_TOKEN }}`.
+   In CI, `actions/setup-node` with `registry-url: https://npm.pkg.github.com` injects the token automatically from `${{ secrets.GH_TOKEN }}`.
 
 Then:
 
@@ -279,9 +279,9 @@ git push --follow-tags
 gh release create "v$(node -p "require('./package.json').version")" --generate-notes
 ```
 
-The workflow then runs `typecheck → test → build → pnpm publish` against `https://npm.pkg.github.com` using the auto-injected `SDK_GITHUB_TOKEN` (no manual secret needed).
+The workflow then runs `typecheck → test → build → pnpm publish` against `https://npm.pkg.github.com` using the auto-injected `GH_TOKEN` (no manual secret needed).
 
-To publish manually from your laptop, set `SDK_GITHUB_TOKEN` and run:
+To publish manually from your laptop, set `GH_TOKEN` and run:
 
 ```bash
 pnpm build
