@@ -14,6 +14,8 @@ export type {
   QuizAttemptSummary,
   VouchRequest,
   VouchResult,
+  StudentMetrics,
+  StudentVouchSummary,
   HealthResponse,
   EventType,
 } from "./types";

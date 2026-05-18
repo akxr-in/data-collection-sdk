@@ -18,6 +18,8 @@ import type {
   QuizAttemptSummary,
   VouchRequest,
   VouchResult,
+  StudentMetrics,
+  StudentVouchSummary,
   HealthResponse,
 } from "./types";
 
@@ -195,6 +197,28 @@ export class DataCollection {
     const { data, error, response } = await this.transport.client.GET(
       "/v1/attempts/{attemptId}",
       { params: { path: { attemptId } } },
+    );
+    if (error || !data) throw new TransportError(response.status, error);
+    return data;
+  }
+
+  async getStudentMetrics(
+    studentId: string,
+  ): Promise<{ data: StudentMetrics; message: string }> {
+    const { data, error, response } = await this.transport.client.GET(
+      "/v1/students/{studentId}/metrics",
+      { params: { path: { studentId } } },
+    );
+    if (error || !data) throw new TransportError(response.status, error);
+    return data;
+  }
+
+  async getStudentVouch(
+    studentId: string,
+  ): Promise<{ data: StudentVouchSummary; message: string }> {
+    const { data, error, response } = await this.transport.client.GET(
+      "/v1/students/{studentId}/vouch",
+      { params: { path: { studentId } } },
     );
     if (error || !data) throw new TransportError(response.status, error);
     return data;

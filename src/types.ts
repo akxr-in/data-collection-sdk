@@ -10,6 +10,8 @@ export type VideoSummary = Schemas["VideoSummary"];
 export type QuizAttemptSummary = Schemas["QuizAttemptSummary"];
 export type VouchRequest = Schemas["VouchRequest"];
 export type VouchResult = Schemas["VouchResult"];
+export type StudentMetrics = Schemas["StudentMetrics"];
+export type StudentVouchSummary = Schemas["StudentVouchSummary"];
 export type HealthResponse = Schemas["HealthResponse"];
 export type EventType = Schemas["EventType"];
 

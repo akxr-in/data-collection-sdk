@@ -329,6 +329,106 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/students/{studentId}/metrics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Rollup metrics for a student (derived from events) */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    studentId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Student metrics rollup */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["StudentMetrics"];
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Lookup failed */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["MessageErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/students/{studentId}/vouch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Event-derived Vouch breakdown (C/E/I); M and P require external data */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    studentId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Vouch summary (partial — missing inputs noted) */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["StudentVouchSummary"];
+                            message: string;
+                        };
+                    };
+                };
+                /** @description Lookup failed */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["MessageErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/attempts/{attemptId}": {
         parameters: {
             query?: never;
@@ -887,6 +987,42 @@ export interface components {
                 I: number;
                 P: number | null;
             };
+        };
+        StudentMetrics: {
+            student_id: string;
+            total_events: number;
+            first_seen_ts: string | null;
+            last_seen_ts: string | null;
+            active_days: number;
+            total_sessions: number;
+            total_session_duration_sec: number;
+            avg_session_duration_sec: number;
+            total_focus_losses: number;
+            videos_watched: number;
+            total_watch_time_sec: number;
+            total_video_completes: number;
+            total_seeks: number;
+            total_replays: number;
+            avg_playback_rate: number;
+            total_quiz_attempts: number;
+            quiz_attempts_submitted: number;
+            avg_quiz_score_pct: number | null;
+            total_quiz_tab_switches: number;
+            total_quiz_answer_changes: number;
+        };
+        StudentVouchSummary: {
+            student_id: string;
+            vouch: number | null;
+            /** @enum {string} */
+            status: "OK" | "INSUFFICIENT_DATA";
+            breakdown: {
+                C: number;
+                E: number;
+                M: number | null;
+                I: number;
+                P: number | null;
+            };
+            missing_inputs: string[];
         };
         HealthResponse: {
             ok: boolean;
