@@ -1,57 +1,57 @@
 {
-    "name": "@akxr-in/data-collection-sdk",
-    "version": "0.1.0",
-    "description": "TypeScript SDK for the akxr data-collection REST APIs",
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/akxr-in/data-collection-sdk.git"
-    },
-    "homepage": "https://github.com/akxr-in/data-collection-sdk#readme",
-    "bugs": {
-        "url": "https://github.com/akxr-in/data-collection-sdk/issues"
-    },
-    "publishConfig": {
-        "registry": "https://npm.pkg.github.com",
-        "access": "restricted"
-    },
-    "type": "module",
-    "main": "./dist/index.cjs",
-    "module": "./dist/index.js",
-    "types": "./dist/index.d.ts",
-    "exports": {
-        ".": {
-            "types": "./dist/index.d.ts",
-            "import": "./dist/index.js",
-            "require": "./dist/index.cjs"
-        }
-    },
-    "files": [
-        "dist",
-        "README.md"
-    ],
-    "sideEffects": false,
-    "scripts": {
-        "build": "tsup",
-        "dev": "tsup --watch",
-        "typecheck": "tsc --noEmit",
-        "test": "vitest run",
-        "gen:types": "openapi-typescript openapi.json -o src/generated/schema.ts",
-        "gen:types:remote": "openapi-typescript http://localhost:3399/openapi.json -o src/generated/schema.ts",
-        "demo": "tsx demo/run.ts"
-    },
-    "devDependencies": {
-        "@types/node": "^25.8.0",
-        "openapi-typescript": "^7.13.0",
-        "tsup": "^8.0.0",
-        "tsx": "^4.22.0",
-        "typescript": "^5.4.0",
-        "vitest": "^1.6.0"
-    },
-    "engines": {
-        "node": ">=18"
-    },
-    "packageManager": "pnpm@9.0.0",
-    "dependencies": {
-        "openapi-fetch": "^0.17.0"
+  "name": "@akxr-in/data-collection-sdk",
+  "version": "0.1.0",
+  "description": "TypeScript SDK for the akxr data-collection REST APIs",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/akxr-in/data-collection-sdk.git"
+  },
+  "homepage": "https://github.com/akxr-in/data-collection-sdk#readme",
+  "bugs": {
+    "url": "https://github.com/akxr-in/data-collection-sdk/issues"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "restricted"
+  },
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "gen:types": "openapi-typescript openapi.json -o src/generated/schema.ts",
+    "gen:types:remote": "openapi-typescript http://localhost:3399/openapi.json -o src/generated/schema.ts",
+    "demo": "tsx demo/run.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^25.8.0",
+    "openapi-typescript": "^7.13.0",
+    "tsup": "^8.0.0",
+    "tsx": "^4.22.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "packageManager": "pnpm@9.0.0",
+  "dependencies": {
+    "openapi-fetch": "^0.17.0"
+  }
 }
